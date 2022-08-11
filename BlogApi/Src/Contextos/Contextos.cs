@@ -1,5 +1,6 @@
 ﻿using BlogApi.Src.Modelos;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace BlogApi.Src.Contextos {
     public class BlogPessoalContexto : DbContext {

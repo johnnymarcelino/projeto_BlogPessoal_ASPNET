@@ -1,4 +1,6 @@
 using BlogApi.Src.Contextos;
+using BlogApi.Src.Repositorios;
+using BlogApi.Src.Repositorios.Implement;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -22,11 +24,22 @@ namespace BlogApi {
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services) {
+
+            // Configuração de Banco de dados
+            services.AddDbContext<BlogPessoalContexto>
+            (opt =>
+            opt.UseSqlServer(Configuration["ConnectionStringsDev:DefaultConnection"]));
+
             // adicionando contexto 
             services.AddDbContext<BlogPessoalContexto>(opt =>
             opt.UseSqlServer(Configuration["ConnectionStringsDev:DefaultConnection"]));
 
+            // Adicionando Repositórios
+            services.AddScoped<IUsuario, UsuarioRepositorio>();
+            services.AddScoped<ITema, TemaRepositorio>();
+
             // Adicionando serviços de controladores 
+            services.AddCors();
             services.AddControllers();
         }
 
@@ -37,6 +50,7 @@ namespace BlogApi {
                 app.UseDeveloperExceptionPage();
             }
 
+            contexto.Database.EnsureCreated();
             app.UseRouting();
 
             app.UseAuthorization();
