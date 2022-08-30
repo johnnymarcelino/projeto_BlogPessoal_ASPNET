@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
 namespace BlogApi.Src.Controladores {
-    public class PostagemControlador {
+    public class PostagemControlador : ControllerBase{
 
         #region Atributos
 
@@ -26,6 +26,15 @@ namespace BlogApi.Src.Controladores {
         #endregion
 
         #region Methods
+
+        /// <summary>
+        /// Pegar usuario pelo Email
+        /// </summary>
+        /// <param name="emailUsuario"> E-mail do usuario</param>
+        /// <returns>ActionResult</returns>
+        /// <response code="200">Retorna as postagens</response>
+        /// <response code="404">Email não existente</response>
+
 
         [HttpGet]
         public async Task<ActionResult> PegarTodasAsPostagensAsync() {
@@ -55,7 +64,7 @@ namespace BlogApi.Src.Controladores {
 
             //try {
             await _repositorio.NovaPostagemAsync(postagem);
-            return Create($"api/Postagens", postagem);
+            return Created($"api/Postagens", postagem);
         }
         [HttpPut]
         public async Task<ActionResult> AtualizarPostagemAsync([FromBody] Postagem postagem) {

@@ -24,14 +24,21 @@ namespace BlogApi.Src.Repositorios.Implement {
 
         #region Metodos
         public async Task<List<Postagem>> PegarTodasAsPostagensAsync() {
-            return await _contexto.Postagens.ToListAsync();
+
+            return await _contexto.Postagens
+           .Include(p => p.Criador)
+           .Include(p => p.Tema)
+           .ToListAsync();
         }
 
         public async Task<Postagem> PegarPostagemPeloIdAsync(int id) {
 
-            if (!ExisteId(id)) throw new Exception("Id postagem não encontrado");
+            if (!ExisteId(id)) throw new Exception("Id da postagem não encontrado");
 
-            return await _contexto.Postagens.FirstOrDefaultAsync(p => p.Id == id);
+            return await _contexto.Postagens
+               .Include(p => p.Criador)
+               .Include(p => p.Tema)
+               .FirstOrDefaultAsync(p => p.Id == id);
 
             // função auxiliar
             bool ExisteId(int id) {
@@ -43,44 +50,75 @@ namespace BlogApi.Src.Repositorios.Implement {
         }
 
         public async Task NovaPostagemAsync(Postagem postagem) {
+            if (!ExisteUsuarioId(postagem.Criador.Id)) throw new Exception("Id usuário não encontrado");
+
+            if (!ExisteTemaId(postagem.Tema.Id)) throw new Exception("Id do tema não encontrado");
             await _contexto.Postagens.AddAsync(
                 new Postagem {
-                    Descricao = postagem.Descricao
+                    Titulo = postagem.Titulo,
+                    Descricao = postagem.Descricao,
+                    Foto = postagem.Foto,
+                    Criador = await _contexto.Usuarios.FirstOrDefaultAsync(u => u.Id ==
+                    postagem.Criador.Id),
+                    Tema = await _contexto.Temas.FirstOrDefaultAsync(t => t.Id ==
+                    postagem.Tema.Id)
                 });
             await _contexto.SaveChangesAsync();
+
+            // funções auxiliares
+
+            bool ExisteUsuarioId(int id) {
+                var auxiliar = _contexto.Usuarios.FirstOrDefault(u => u.Id == id);
+                return auxiliar != null;
+            }
+            bool ExisteTemaId(int id) {
+                var auxiliar = _contexto.Temas.FirstOrDefault(t => t.Id == id);
+                return auxiliar != null;
+            }
         }
-        public async Task AtualizarPostagemAsync(Postagem postagem) {
+    public async Task AtualizarPostagemAsync(Postagem postagem) {
 
-            // if (!ExisteDescricao(postagem.Descricao)) throw new Exception("Descrição já existe no sistema");
+        if (!ExisteTemaId(postagem.Tema.Id)) throw new Exception("Id do tema não encontrado");
 
-            var auxiliar = await PegarPostagemPeloIdAsync(postagem.Id);
-            auxiliar.Descricao = postagem.Descricao;
-            _contexto.Postagens.Update(auxiliar);
-            await _contexto.SaveChangesAsync();
-        }
+        var postagemExistente = await PegarPostagemPeloIdAsync(postagem.Id);
+        postagemExistente.Titulo = postagem.Titulo;
+        postagemExistente.Descricao = postagem.Descricao;
+        postagemExistente.Foto = postagem.Foto;
+        postagemExistente.Tema = await _contexto.Temas.FirstOrDefaultAsync(t => t.Id
+        == postagem.Tema.Id);
 
-        public async Task DeletarPostagemAsync(int id) {
+        _contexto.Postagens.Update(postagemExistente);
+        await _contexto.SaveChangesAsync();
 
-            // var auxiliar = await PegarPostagemPeloId(id);
-            _contexto.Postagens.Remove(await PegarPostagemPeloIdAsync(id));
-            await _contexto.SaveChangesAsync();
-        }
-        private bool ExisteDescricao(string descricao) {
+        // funções auxiliares
 
-            var auxiliar = _contexto.Postagens.FirstOrDefault(p => p.Descricao == descricao);
-
+        bool ExisteTemaId(int id) {
+            var auxiliar = _contexto.Temas.FirstOrDefault(t => t.Id == id);
             return auxiliar != null;
         }
-        #endregion
-
-        //public Task Deleted() {
-        //    throw new NotImplementedException();
-        //}
-        //public Task Read() {
-        //    throw new NotImplementedException();
-        //}
-        //public Task Updated() {
-        //    throw new NotImplementedException();
-        //}
     }
+    public async Task DeletarPostagemAsync(int id) {
+
+        // var auxiliar = await PegarPostagemPeloId(id);
+        _contexto.Postagens.Remove(await PegarPostagemPeloIdAsync(id));
+        await _contexto.SaveChangesAsync();
+    }
+    private bool ExisteDescricao(string descricao) {
+
+        var auxiliar = _contexto.Postagens.FirstOrDefault(p => p.Descricao == descricao);
+
+        return auxiliar != null;
+    }
+    #endregion
+
+    //public Task Deleted() {
+    //    throw new NotImplementedException();
+    //}
+    //public Task Read() {
+    //    throw new NotImplementedException();
+    //}
+    //public Task Updated() {
+    //    throw new NotImplementedException();
+    //}
+}
 }
